@@ -1,0 +1,16 @@
+
+
+services:
+  redis:
+    image: "erick2113/radis"
+    
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: "mysql"
+    
+    
+    
+    ports:
+      - "3306:3306"
