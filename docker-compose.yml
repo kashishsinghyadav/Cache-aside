@@ -1,16 +1,12 @@
-
-
 services:
   redis:
-    image: "erick2113/radis"
-    
+    image: "redis"
     ports:
       - "6379:6379"
 
   mysql:
     image: "mysql"
-    
-    
-    
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
     ports:
       - "3306:3306"
