@@ -27,30 +27,39 @@ def get_item_from_db(item_id):
 
     connection = create_db_connection()
     if connection:
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM products WHERE id = %s", (item_id,))
-        item = cursor.fetchone()
-        connection.close()
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM products WHERE id = %s", (item_id,))
+            item = cursor.fetchone()
+            connection.close()
 
-       
-        if item:
-            cache.set(item_id, str(item), ex=60)  
-        return item
+            if item:
+                cache.set(item_id, str(item), ex=60)
+            return item
+        except Error as e:
+            print(f"Error fetching item from DB: {e}")
+            connection.close()
+            return None
     return None
 
 def update_item_in_db(item_id, new_data):
     connection = create_db_connection()
     if connection:
-        cursor = connection.cursor()
-        cursor.execute(
-            "UPDATE products SET name = %s, price = %s WHERE id = %s",
-            (new_data["name"], new_data["price"], item_id)
-        )
-        connection.commit()
-        connection.close()
+        try:
+            cursor = connection.cursor()
+            cursor.execute(
+                "UPDATE products SET name = %s, price = %s WHERE id = %s",
+                (new_data["name"], new_data["price"], item_id)
+            )
+            connection.commit()
+            connection.close()
 
-        cache.delete(item_id)
-        return True
+            cache.delete(item_id)
+            return True
+        except Error as e:
+            print(f"Error updating item in DB: {e}")
+            connection.close()
+            return False
     return False
 
 @app.get("/items/{item_id}")
@@ -71,9 +80,16 @@ async def update_item(item_id: int, item: dict):
 async def get_all_items():
     connection = create_db_connection()
     if connection:
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM products")
-        items = cursor.fetchall()
-        connection.close()
-        return {"items": items}
-    raise HTTPException(status_code=500, detail="Failed to fetch items")
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM products")
+            items = cursor.fetchall()
+            connection.close()
+            return {"items": items}
+        except Error as e:
+            print(f"Error fetching items from DB: {e}")
+            connection.close()
+            raise HTTPException(status_code=500, detail="Failed to fetch items from database")
+    else:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
